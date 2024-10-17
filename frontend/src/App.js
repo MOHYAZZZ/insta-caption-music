@@ -1,6 +1,18 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
-import { Slider } from '@mui/material';
+import {
+  Slider,
+  ThemeProvider,
+  createTheme,
+  Typography,
+  Button,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormControl,
+  FormLabel,
+} from '@mui/material';
+import './App.css';
 
 function App() {
   const [image, setImage] = useState(null);
@@ -54,70 +66,108 @@ function App() {
     }
   };
 
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+      primary: {
+        main: '#90caf9',
+      },
+      secondary: {
+        main: '#f48fb1',
+      },
+    },
+  });
+
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>PicGroove</h1>
-      {imagePreview && (
-        <div style={{ marginTop: '20px', width: '150px', height: '150px', border: '1px solid #ccc', display: 'inline-block' }}>
-          <img src={imagePreview} alt="Selected" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-      )}
-      <br /><br />
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleImageChange}
-      />
-      <br /><br />
-      <div style={{ width: '300px', margin: '0 auto' }}>
-        <p>Adjust Creativity (Temperature): {temperature.toFixed(2)}</p>
-        <Slider
-          value={temperature}
-          min={0}
-          max={1}
-          step={0.01}
-          onChange={handleTemperatureChange}
-          aria-labelledby="temperature-slider"
+    <ThemeProvider theme={darkTheme}>
+      <div className="app-container">
+        <Typography variant="h3" component="h1" gutterBottom>
+          PicGroove
+        </Typography>
+        {imagePreview && (
+          <div className="image-preview">
+            <img src={imagePreview} alt="Selected" />
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="file-input"
         />
-      </div>
-      <br />
-      <div>
-        <p>Select Captioning Model:</p>
-        <label>
-          <input
-            type="radio"
-            value="base"
-            checked={modelType === 'base'}
-            onChange={(e) => setModelType(e.target.value)}
+        <div className="slider-container">
+          <Typography gutterBottom>
+            Adjust Creativity (Temperature): {temperature.toFixed(2)}
+          </Typography>
+          <Slider
+            value={temperature}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={handleTemperatureChange}
+            aria-labelledby="temperature-slider"
           />
-          Base Model
-        </label>
-        <label style={{ marginLeft: '20px' }}>
-          <input
-            type="radio"
-            value="large"
-            checked={modelType === 'large'}
-            onChange={(e) => setModelType(e.target.value)}
-          />
-          Large Model
-        </label>
-      </div>
-      <br />
-      <button onClick={handleSubmit} disabled={!image || isLoading}>
-        {isLoading ? 'Processing...' : 'Get Captions and Music'}
-      </button>
-      <button onClick={handleClear} style={{ marginLeft: '10px' }}>
-        Clear
-      </button>
-      <br /><br />
-      {result && (
-        <div>
-          <h2>Recommendations:</h2>
-          <p>{result}</p>
         </div>
-      )}
-    </div>
+        <FormControl component="fieldset" className="model-selection">
+          <FormLabel component="legend">Select Captioning Model:</FormLabel>
+          <RadioGroup
+            row
+            aria-label="modelType"
+            name="modelType"
+            value={modelType}
+            onChange={(e) => setModelType(e.target.value)}
+          >
+            <FormControlLabel value="base" control={<Radio />} label="Base Model" />
+            <FormControlLabel value="large" control={<Radio />} label="Large Model" />
+          </RadioGroup>
+        </FormControl>
+        <div className="button-group">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmit}
+            disabled={!image || isLoading}
+          >
+            {isLoading ? 'Processing...' : 'Get Captions and Music'}
+          </Button>
+          <Button variant="outlined" color="secondary" onClick={handleClear} className="clear-button">
+            Clear
+          </Button>
+        </div>
+        {result && (
+          <div className="result-container">
+            <Typography variant="h5" gutterBottom>
+              Recommendations:
+            </Typography>
+
+            {/* Captions Section */}
+            <div className="caption-container">
+              <Typography variant="h6" gutterBottom>
+                Captions:
+              </Typography>
+              {result.captions && result.captions.map((caption, index) => (
+                <Typography key={index} variant="body1" className="caption-text">
+                  {caption}
+                </Typography>
+              ))}
+            </div>
+
+            {/* Songs Section */}
+            <div className="song-container">
+              <Typography variant="h6" gutterBottom>
+                Songs:
+              </Typography>
+              {result.songs && result.songs.map((song, index) => (
+                <Typography key={index} variant="body1" className="song-text">
+                  {song}
+                </Typography>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </ThemeProvider>
   );
 }
 

@@ -1,3 +1,4 @@
+import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from transformers import (
@@ -59,12 +60,26 @@ def generate_image_caption(image_path, model_type='base'):
 
 
 def generate_caption_and_music(image_caption, temperature=0.7):
-    prompt = f"Based on the image description: '{
-        image_caption}', generate three creative Instagram captions and suggest three songs that match the mood."
+    prompt = f"""
+    Based on the image description: '{image_caption}', generate three creative Instagram captions and suggest three songs that match the mood.
+    Please respond in the following JSON format:
 
+    {{
+      "captions": [
+        "Caption 1",
+        "Caption 2",
+        "Caption 3"
+      ],
+      "songs": [
+        "Song 1",
+        "Song 2",
+        "Song 3"
+      ]
+    }}
+    """
     try:
         response = openai.ChatCompletion.create(
-            model='gpt-4o',
+            model='gpt-4',  # Corrected model name
             messages=[
                 {'role': 'system', 'content': 'You are a creative assistant that provides catchy Instagram captions and music recommendations.'},
                 {'role': 'user', 'content': prompt}
@@ -73,15 +88,20 @@ def generate_caption_and_music(image_caption, temperature=0.7):
             max_tokens=500,
         )
 
-        result = response.choices[0].message.content.strip()
-        return result
+        # Parse the response as a JSON string
+        result_str = response.choices[0].message['content'].strip()
+
+        # Convert to a Python dictionary
+        result = json.loads(result_str)
+
+        return result  # Returning the dictionary
 
     except openai.error.OpenAIError as e:
         print(f"OpenAI API error: {e}")
-        return "An error occurred while generating captions and music recommendations."
+        return {"error": "An error occurred while generating captions and music recommendations."}
     except Exception as e:
         print(f"Unexpected error: {e}")
-        return "An error occurred while processing your request."
+        return {"error": "An error occurred while processing your request."}
 
 
 @app.route('/upload', methods=['POST'])
