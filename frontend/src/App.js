@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
+import { useDropzone } from 'react-dropzone';
 import {
   Slider,
   ThemeProvider,
@@ -23,11 +24,20 @@ function App() {
   const [modelType, setModelType] = useState('base');
   const fileInputRef = useRef();
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = (file) => {
     setImage(file);
     setImagePreview(URL.createObjectURL(file));
   };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: 'image/*',
+    multiple: false,
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        handleImageChange(acceptedFiles[0]);
+      }
+    },
+  });
 
   const handleTemperatureChange = (event, newValue) => {
     setTemperature(newValue);
@@ -84,18 +94,51 @@ function App() {
         <Typography variant="h3" component="h1" gutterBottom>
           PicGroove
         </Typography>
+
+        {/* Image Preview */}
         {imagePreview && (
           <div className="image-preview">
             <img src={imagePreview} alt="Selected" />
           </div>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          className="file-input"
-        />
+
+        {/* Drag-and-Drop Area */}
+        <div
+          {...getRootProps()}
+          className={`dropzone ${isDragActive ? 'active-dropzone' : ''}`}
+        >
+          <input {...getInputProps()} />
+          <Typography>
+            {isDragActive
+              ? 'Drop the image here...'
+              : 'Drag & Drop an image here, or click to select'}
+          </Typography>
+        </div>
+
+        {/* File Picker Button */}
+        <div className="file-input-container">
+          <Button
+            variant="contained"
+            color="primary"
+            component="label"
+          >
+            Choose File
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => handleImageChange(e.target.files[0])}
+            />
+          </Button>
+          {image && (
+            <Typography variant="body2" style={{ marginTop: '10px' }}>
+              Selected File: {image.name}
+            </Typography>
+          )}
+        </div>
+
+        {/* Slider */}
         <div className="slider-container">
           <Typography gutterBottom>
             Adjust Creativity (Temperature): {temperature.toFixed(2)}
@@ -109,6 +152,8 @@ function App() {
             aria-labelledby="temperature-slider"
           />
         </div>
+
+        {/* Model Selection */}
         <FormControl component="fieldset" className="model-selection">
           <FormLabel component="legend">Select Captioning Model:</FormLabel>
           <RadioGroup
@@ -122,6 +167,8 @@ function App() {
             <FormControlLabel value="large" control={<Radio />} label="Large Model" />
           </RadioGroup>
         </FormControl>
+
+        {/* Submit and Clear Buttons */}
         <div className="button-group">
           <Button
             variant="contained"
@@ -135,13 +182,14 @@ function App() {
             Clear
           </Button>
         </div>
+
+        {/* Result Section */}
         {result && (
           <div className="result-container">
             <Typography variant="h5" gutterBottom>
               Recommendations:
             </Typography>
 
-            {/* Captions Section */}
             <div className="caption-container">
               <Typography variant="h6" gutterBottom>
                 Captions:
@@ -153,7 +201,6 @@ function App() {
               ))}
             </div>
 
-            {/* Songs Section */}
             <div className="song-container">
               <Typography variant="h6" gutterBottom>
                 Songs:
